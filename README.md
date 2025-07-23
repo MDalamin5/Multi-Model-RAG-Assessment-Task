@@ -133,7 +133,7 @@ Request Body:
 }
 ```
 
-## 2. Memory Endpoint
+## 2. `Long Term` or Cross Thread Memory Endpoint
 This endpoint retrieves the stored long-term memory for a user, which is displayed in the Streamlit app's sidebar.
 
 - **Endpoint:** `GET /memory/{user_id}`
