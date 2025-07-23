@@ -19,7 +19,7 @@ The core of the system is an agent built with LangChain and LangGraph. This agen
 
 The agent's logic is structured as a graph, where each node represents a step in the reasoning process. The agent dynamically traverses this graph based on the relevance of the retrieved information.
 
-<!-- ![System Architecture Graph](bangla-rag-agent/docs/images/system_architecture.png) -->
+<!-- ![System Architecture Graph](src/docs/images/system_architecture.png) -->
 
 ## **LangGraph-Orchestrator**
 
@@ -100,7 +100,7 @@ Now, open the `.env` file and fill in your actual API keys from Groq, Pinecone, 
 ## 5. Run the Backend Server
 The backend is a FastAPI application. Run it from the root directory:
 ```bash
-cd bangla-rag-agent
+cd src
 uvicorn app.main:app --reload
 ```
 The API will be available at http://127.0.0.1:8000. You will see log messages in this terminal
@@ -159,7 +159,7 @@ Here are some sample interactions demonstrating the system's capabilities, inclu
 
 ## Interactions in `Bangla`: First-time user introduces themself
 
-![alt text](bangla-rag-agent/docs/images/interaction1.png)
+![alt text](src/docs/images/interaction1.png)
 
 **Memory Stored in First Interaction:**
 ```json
@@ -180,12 +180,12 @@ Here are some sample interactions demonstrating the system's capabilities, inclu
 }
 ```
 ## Interactions in `English`:
-![alt text](bangla-rag-agent/docs/images/interaction2.png)
+![alt text](src/docs/images/interaction2.png)
 
 ## Please see this directory for more output results.
 ```bash
 
-bangla-rag-agent/docs/images/
+src/docs/images/
 ```
 
 ## 📊 Evaluation Matrix
@@ -255,7 +255,7 @@ However, for further improvement on a larger and more diverse dataset, I would c
 
 ```bash
 
-/bangla_rag_agent
+/src
 |
 |-- app/
 |   |-- __init__.py
@@ -280,4 +280,4 @@ However, for further improvement on a larger and more diverse dataset, I would c
 ```
 
 ## ***API UI***
-![alt text](bangla-rag-agent/docs/images/fastapi-interface.png)
+![alt text](src/docs/images/fastapi-interface.png)
