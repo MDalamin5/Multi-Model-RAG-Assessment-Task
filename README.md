@@ -182,6 +182,12 @@ Here are some sample interactions demonstrating the system's capabilities, inclu
 ## Interactions in `English`:
 ![alt text](bangla-rag-agent/docs/images/interaction2.png)
 
+## Please see this directory for more output results.
+```bash
+
+bangla-rag-agent/docs/images/
+```
+
 ## 📊 Evaluation Matrix
 A quantitative evaluation was performed to measure the system's accuracy and relevance.
 - **Context Relevance:** Measures if the retriever fetches the correct documents containing the necessary information.
@@ -272,3 +278,6 @@ However, for further improvement on a larger and more diverse dataset, I would c
 |-- README.md               # This file
 
 ```
+
+## ***API UI**
+![alt text](bangla-rag-agent/docs/images/fastapi-interface.png)
