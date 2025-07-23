@@ -1,0 +1,25 @@
+# Core LangChain and LangGraph
+langchain
+langgraph
+langchain-groq
+langchain-huggingface
+langchain-pinecone
+langchain-community
+langchain-core
+
+# Vector Store and Models
+pinecone-client
+sentence-transformers
+trustcall
+
+# Environment and API
+python-dotenv
+google-search-results # For GoogleSerperAPIWrapper
+
+# Web Framework and Server
+fastapi
+uvicorn[standard]
+
+# Frontend
+streamlit
+requests
