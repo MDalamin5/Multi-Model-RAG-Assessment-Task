@@ -66,8 +66,8 @@ Follow these steps to get the project running on your local machine.
 ## 1. Clone the Repository
 ```bash
 
-git clone <your-repository-url>
-cd <repository-name>
+git clone https://github.com/MDalamin5/Multi-Model-RAG-Assessment-Task-10ms.git
+cd Multi-Model-RAG-Assessment-Task-10ms
 ```
 ## 2. Set Up a Virtual Environment (Recommended)
 ```bash
@@ -100,6 +100,7 @@ Now, open the `.env` file and fill in your actual API keys from Groq, Pinecone, 
 ## 5. Run the Backend Server
 The backend is a FastAPI application. Run it from the root directory:
 ```bash
+cd bangla-rag-agent
 uvicorn app.main:app --reload
 ```
 The API will be available at http://127.0.0.1:8000. You will see log messages in this terminal
@@ -264,9 +265,7 @@ However, for further improvement on a larger and more diverse dataset, I would c
 |       |-- interaction3.png
 |       |-- system_architecture.png
 |
-|-- streamlit_app.py        # The Streamlit user interface
-|-- evaluation_data.py      # Contains the questions for evaluation
-|-- run_evaluation.py       # The script to run the RAG evaluation
+|-- streamlit_app.py        # The Streamlit user interface 
 |-- .env                    # Secret API keys
 |-- .env.example            # Template for environment variables
 |-- requirements.txt        # Python dependencies
