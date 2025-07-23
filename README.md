@@ -63,7 +63,65 @@ graph TD
 Follow these steps to get the project running on your local machine.
 1. Clone the Repository
 ```bash
-Generated bash
+
 git clone <your-repository-url>
 cd <repository-name>
+```
+
+```bash
+2. Set Up a Virtual Environment (Recommended)
+
+# For Windows
+python -m venv venv
+venv\Scripts\activate
+
+# For macOS/Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+## 4. Configure Environment Variables
+Create a file named .env in the root directory by copying the example file:
+```bash
+# For Windows
+copy .env.example .env
+
+# For macOS/Linux
+cp .env.example .env
+```
+
+Now, open the .env file and fill in your actual API keys from Groq, Pinecone, Hugging Face, and SERP API.
+
+## 5. Run the Backend Server
+The backend is a FastAPI application. Run it from the root directory:
+```bash
+uvicorn app.main:app --reload
+```
+The API will be available at http://127.0.0.1:8000. You will see log messages in this terminal
+
+## 6. Run the Frontend Application
+Open a new terminal, activate the virtual environment again, and run the Streamlit app:
+```bash
+streamlit run streamlit_app.py
+```
+Your web browser will open with the chatbot interface, ready for you to interact with.
+
+## 📝 API Documentation
+The FastAPI backend provides two main endpoints.
+1. Chat Endpoint
+This is the main endpoint for interacting with the agent.
+Endpoint: POST /chat
+Request Body:
+```json
+Generated json
+{
+  "query": "আপনার প্রশ্ন এখানে লিখুন",
+  "user_id": "unique_student_id",
+  "thread_id": "unique_session_id"
+}
 ```
