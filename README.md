@@ -44,3 +44,25 @@ graph TD
     subgraph "Memory"
         F
     end
+
+<hr>
+
+## 🛠️ Technology Stack & Tools
+- **Backend**: FastAPI, Uvicorn
+- **Frontend**: Streamlit
+- **LLM & Orchestration**: LangChain, LangGraph, LangSmith
+- **LLM Provider:** Groq (for Llama 4)
+- **Vector Database:** Pinecone
+- **Embedding Model:** Hugging Face sentence-transformers/all-mpnet-base-v2
+- **Web Search:** Google Serper API
+- **Core Libraries:** python-dotenv, pydantic, trustcall
+
+
+## 🚀 Setup and Installation Guide
+Follow these steps to get the project running on your local machine.
+1. Clone the Repository
+```
+Generated bash
+git clone <your-repository-url>
+cd <repository-name>
+```
