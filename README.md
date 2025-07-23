@@ -279,5 +279,5 @@ However, for further improvement on a larger and more diverse dataset, I would c
 
 ```
 
-## ***API UI**
+## ***API UI***
 ![alt text](bangla-rag-agent/docs/images/fastapi-interface.png)
