@@ -1,0 +1,180 @@
+from langgraph.graph import StateGraph, START, END
+from langgraph.store.base import BaseStore
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.store.memory import InMemoryStore
+from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
+from langchain.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from trustcall import create_extractor
+
+# Import shared components and schemas
+from .config import llm, retriever, search_tool
+from .schemas import GraphState, StudentProfile, Grade
+
+# --- Memory Extractor ---
+# The extractor will use the LLM to pull information from the conversation
+# and structure it according to the StudentProfile schema.
+memory_extractor = create_extractor(
+    llm,
+    tools=[StudentProfile],
+    tool_choice="StudentProfile",
+)
+
+# --- Utility Functions ---
+def format_docs(retriever_docs):
+    return "\n\n".join(doc.page_content for doc in retriever_docs)
+
+# --- Graph Nodes ---
+
+def retrieve_node(state: GraphState):
+    """Retrieves documents from the vector store based on the latest user question."""
+    print("---NODE: RETRIEVE DOCUMENTS---")
+    question = state["messages"][-1].content
+    retrieved_docs = retriever.invoke(question)
+    print(f"Retrieved {len(retrieved_docs)} docs.")
+    return {"docs": retrieved_docs}
+
+def grade_document_node(state: GraphState):
+    """Grades the retrieved documents for relevance to the user's question."""
+    print("---NODE: GRADE DOCUMENTS---")
+    question = state["messages"][-1].content
+    context = state["docs"]
+    
+    system_msg = f"""Your task is to check if the retrieved context is relevant to the user's question. 
+Can the question be answered using this context? If relevant, say 'yes', otherwise say 'no'.
+Question: {question}
+Context: {context}
+Carefully analyze the context and question and produce the output based on the required schema."""
+    
+    llm_with_tool = llm.with_structured_output(Grade)
+    response = llm_with_tool.invoke([SystemMessage(content=system_msg)])
+    print(f"Document Grade: {response.binary_output}")
+    return {"grade": response.binary_output}
+
+def search_on_web_node(state: GraphState):
+    """Performs a web search if the retrieved documents are not relevant."""
+    print("---NODE: WEB SEARCH---")
+    question = state["messages"][-1].content
+    src_result = search_tool.run(question)
+    print("---WEB SEARCH COMPLETE---")
+    return {"src_docs": str(src_result)}
+
+def generate_node(state: GraphState, config: dict, store: BaseStore):
+    """Generates a response using LLM, context, and long-term memory."""
+    print("---NODE: GENERATE RESPONSE---")
+    question = state["messages"][-1].content
+    context_source = ""
+
+    # Determine context source (retriever or web search)
+    if state.get("src_docs"):
+        print("--- Using context from Web Search ---")
+        context_source = state["src_docs"]
+    else:
+        print("--- Using context from Retriever ---")
+        context_source = format_docs(state["docs"])
+
+    # Load long-term memory for the user
+    user_id = config["configurable"]["user_id"]
+    namespace = ("memory", user_id)
+    existing_memory = store.get(namespace, "student_profile")
+    
+    if existing_memory and existing_memory.value:
+        memory_dict = existing_memory.value
+        formatted_memory = (
+            f"ছাত্রের নাম: {memory_dict.get('user_name', 'অজানা')}\n"
+            f"ছাত্রের শ্রেণি: {memory_dict.get('grade_or_class', 'অজানা')}\n"
+            f"আগ্রহের বিষয়: {', '.join(memory_dict.get('topics_of_interest', ['কিছুই না']))}"
+        )
+    else:
+        formatted_memory = "এই ছাত্রের জন্য কোনো স্মৃতি এখনো জমা হয়নি।"
+    print(f"Loaded Memory: {formatted_memory}")
+
+    # Define the RAG prompt with memory
+    rag_with_memory_prompt = PromptTemplate(
+        template=(
+            "তুমি একজন সহায়ক ও ব্যক্তিগত বাংলা শিক্ষক। নিচের প্রশ্নটির উত্তর দেওয়ার জন্য প্রদত্ত প্রাসঙ্গিক তথ্য এবং ছাত্রের সম্পর্কে তোমার স্মৃতি ব্যবহার করো।\n\n"
+            "## ছাত্রের স্মৃতি:\n{memory}\n\n"
+            "## প্রাসঙ্গিক তথ্য:\n{context}\n\n"
+            "## প্রশ্ন:\n{question}\n\n"
+            "উত্তর (বাংলায় সংক্ষিপ্ত, ব্যক্তিগত এবং স্পষ্টভাবে দাও):"
+        ),
+        input_variables=["question", "context", "memory"],
+    )
+
+    rag_chain = rag_with_memory_prompt | llm | StrOutputParser()
+    
+    response = rag_chain.invoke({
+        "context": context_source,
+        "question": question,
+        "memory": formatted_memory
+    })
+    print(f"Generated Response: {response}")
+    return {"messages": [AIMessage(content=response)]}
+
+def update_memory_node(state: GraphState, config: dict, store: BaseStore):
+    """Updates the student's profile in the long-term memory store."""
+    print("---NODE: UPDATE MEMORY---")
+    user_id = config["configurable"]["user_id"]
+    namespace = ("memory", user_id)
+    
+    extraction_instruction = "নিচের কথোপকথন থেকে ছাত্রের প্রোফাইল তৈরি বা আপডেট করো:"
+    recent_exchange = state["messages"][-2:]
+    
+    # NOTE: The 'existing' parameter in the original notebook caused an error.
+    # This simplified version re-extracts from the recent conversation.
+    # It's more robust against the original 'trustcall' patch error.
+    result = memory_extractor.invoke({
+        "messages": [SystemMessage(content=extraction_instruction)] + recent_exchange,
+    })
+    
+    if result.get("responses"):
+        updated_profile = result["responses"][0].model_dump()
+        print(f"Updated Profile: {updated_profile}")
+        store.put(namespace, "student_profile", updated_profile)
+    else:
+        print("No new profile information found to update.")
+    return
+
+# --- Conditional Routing ---
+def route_node(state: GraphState):
+    """Decides whether to use retrieved docs or perform a web search."""
+    print("---NODE: ROUTING---")
+    if state['grade'] == 'yes':
+        print("Decision: Documents are relevant. Generating response.")
+        return "relevant_docs"
+    else:
+        print("Decision: Documents not relevant. Performing web search.")
+        return "not_relevant_docs"
+
+# --- Graph Builder ---
+def get_graph():
+    """Builds and compiles the LangGraph agent."""
+    
+    long_term_store = InMemoryStore()
+    checkpointer = MemorySaver()
+
+    builder = StateGraph(GraphState)
+
+    builder.add_node("retrieve", retrieve_node)
+    builder.add_node("grade_docs", grade_document_node)
+    builder.add_node("web_call", search_on_web_node)
+    builder.add_node("generate", generate_node)
+    builder.add_node("update_memory", update_memory_node)
+
+    builder.add_edge(START, "retrieve")
+    builder.add_edge("retrieve", "grade_docs")
+    builder.add_conditional_edges(
+        "grade_docs",
+        route_node,
+        {
+            "relevant_docs": "generate",
+            "not_relevant_docs": "web_call"
+        }
+    )
+    builder.add_edge("web_call", "generate")
+    builder.add_edge("generate", "update_memory")
+    builder.add_edge("update_memory", END)
+
+    graph = builder.compile(checkpointer=checkpointer, store=long_term_store)
+    print("✅ Agent graph compiled successfully.")
+    return graph
