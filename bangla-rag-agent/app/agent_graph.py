@@ -11,9 +11,11 @@ from trustcall import create_extractor
 from .config import llm, retriever, search_tool
 from .schemas import GraphState, StudentProfile, Grade
 
+# --- Define the long-term memory store at the module level ---
+# This makes it a singleton that can be imported and accessed by other modules (like main.py)
+long_term_store = InMemoryStore()
+
 # --- Memory Extractor ---
-# The extractor will use the LLM to pull information from the conversation
-# and structure it according to the StudentProfile schema.
 memory_extractor = create_extractor(
     llm,
     tools=[StudentProfile],
@@ -24,7 +26,7 @@ memory_extractor = create_extractor(
 def format_docs(retriever_docs):
     return "\n\n".join(doc.page_content for doc in retriever_docs)
 
-# --- Graph Nodes ---
+# --- Graph Nodes (No changes here, keeping them the same) ---
 
 def retrieve_node(state: GraphState):
     """Retrieves documents from the vector store based on the latest user question."""
@@ -65,7 +67,6 @@ def generate_node(state: GraphState, config: dict, store: BaseStore):
     question = state["messages"][-1].content
     context_source = ""
 
-    # Determine context source (retriever or web search)
     if state.get("src_docs"):
         print("--- Using context from Web Search ---")
         context_source = state["src_docs"]
@@ -73,7 +74,6 @@ def generate_node(state: GraphState, config: dict, store: BaseStore):
         print("--- Using context from Retriever ---")
         context_source = format_docs(state["docs"])
 
-    # Load long-term memory for the user
     user_id = config["configurable"]["user_id"]
     namespace = ("memory", user_id)
     existing_memory = store.get(namespace, "student_profile")
@@ -89,7 +89,6 @@ def generate_node(state: GraphState, config: dict, store: BaseStore):
         formatted_memory = "এই ছাত্রের জন্য কোনো স্মৃতি এখনো জমা হয়নি।"
     print(f"Loaded Memory: {formatted_memory}")
 
-    # Define the RAG prompt with memory
     rag_with_memory_prompt = PromptTemplate(
         template=(
             "তুমি একজন সহায়ক ও ব্যক্তিগত বাংলা শিক্ষক। নিচের প্রশ্নটির উত্তর দেওয়ার জন্য প্রদত্ত প্রাসঙ্গিক তথ্য এবং ছাত্রের সম্পর্কে তোমার স্মৃতি ব্যবহার করো।\n\n"
@@ -117,25 +116,47 @@ def update_memory_node(state: GraphState, config: dict, store: BaseStore):
     user_id = config["configurable"]["user_id"]
     namespace = ("memory", user_id)
     
-    extraction_instruction = "নিচের কথোপকথন থেকে ছাত্রের প্রোফাইল তৈরি বা আপডেট করো:"
-    recent_exchange = state["messages"][-2:]
+    # --- CRITICAL CHANGE HERE ---
+    # We only need the user's latest message to extract information.
+    # The AI's previous long answer confuses the extractor.
+    last_user_message = state["messages"][-2] # The message before the last AI response
     
-    # NOTE: The 'existing' parameter in the original notebook caused an error.
-    # This simplified version re-extracts from the recent conversation.
-    # It's more robust against the original 'trustcall' patch error.
+    # We also get the existing memory to update it, not overwrite it.
+    existing_memory_record = store.get(namespace, "student_profile")
+    existing_profile = {"StudentProfile": existing_memory_record.value} if existing_memory_record else None
+
+    extraction_instruction = (
+        "Based on the user's message, extract or update the student's profile. "
+        "If an existing profile is provided, merge the new information into it. "
+        "Crucially, all extracted text for 'topics_of_interest' and 'last_topic_discussed' MUST be in the Bengali (Bangla) language."
+    )
+    
+    # Invoke the extractor with a cleaner, more focused context.
+    # We pass the instruction, the user's message, and the existing profile to update.
     result = memory_extractor.invoke({
-        "messages": [SystemMessage(content=extraction_instruction)] + recent_exchange,
+        "messages": [
+            SystemMessage(content=extraction_instruction),
+            last_user_message
+        ],
+        "existing": existing_profile
     })
     
     if result.get("responses"):
-        updated_profile = result["responses"][0].model_dump()
-        print(f"Updated Profile: {updated_profile}")
-        store.put(namespace, "student_profile", updated_profile)
+        # The extractor now correctly uses the 'patch' operation
+        updated_profile = result["responses"][0]
+        
+        # Check if the response is a dictionary (from model_dump) or already a patch object
+        if hasattr(updated_profile, 'model_dump'):
+             profile_to_save = updated_profile.model_dump()
+        else: # It might be a patch object from trustcall
+             profile_to_save = updated_profile
+
+        print(f"Updated Profile to save: {profile_to_save}")
+        store.put(namespace, "student_profile", profile_to_save)
     else:
         print("No new profile information found to update.")
     return
 
-# --- Conditional Routing ---
 def route_node(state: GraphState):
     """Decides whether to use retrieved docs or perform a web search."""
     print("---NODE: ROUTING---")
@@ -149,32 +170,29 @@ def route_node(state: GraphState):
 # --- Graph Builder ---
 def get_graph():
     """Builds and compiles the LangGraph agent."""
-    
-    long_term_store = InMemoryStore()
     checkpointer = MemorySaver()
-
     builder = StateGraph(GraphState)
 
+    # Add nodes
     builder.add_node("retrieve", retrieve_node)
     builder.add_node("grade_docs", grade_document_node)
     builder.add_node("web_call", search_on_web_node)
     builder.add_node("generate", generate_node)
     builder.add_node("update_memory", update_memory_node)
 
+    # Add edges
     builder.add_edge(START, "retrieve")
     builder.add_edge("retrieve", "grade_docs")
     builder.add_conditional_edges(
         "grade_docs",
         route_node,
-        {
-            "relevant_docs": "generate",
-            "not_relevant_docs": "web_call"
-        }
+        {"relevant_docs": "generate", "not_relevant_docs": "web_call"},
     )
     builder.add_edge("web_call", "generate")
     builder.add_edge("generate", "update_memory")
     builder.add_edge("update_memory", END)
 
+    # Use the module-level long_term_store when compiling
     graph = builder.compile(checkpointer=checkpointer, store=long_term_store)
     print("✅ Agent graph compiled successfully.")
     return graph
