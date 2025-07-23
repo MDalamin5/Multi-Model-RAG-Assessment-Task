@@ -169,7 +169,7 @@ Here are some sample interactions demonstrating the system's capabilities, inclu
 ## Interaction 2: Same user in a new session asks a related question
 **User**: অনুপমের ভাষায় সুপুরুষ কাকে বলা হয়েছে?
 **Agent Response**: আল আমিন, তোমার প্রশ্নের উত্তর হলো: অনুপমের ভাষায় সুপুরুষ বলা হয়েছে শম্ভুনাথ সেনকে।
-![alt text](bangla-rag-agent/docs/images/interaction2.pn)
+![alt text](bangla-rag-agent/docs/images/interaction2.png)
 
 ### Memory Updated:
 ```json
@@ -183,7 +183,7 @@ Here are some sample interactions demonstrating the system's capabilities, inclu
 ## Interaction 3: User asks another question
 User: কাকে অনুপমের ভাগ্য দেবতা বলে উল্লেখ করা হয়েছে?
 Agent Response: আল আমিন, তোমাকে নিশ্চয়ই মনে আছে যে, অনুপমের মামাকে তার ভাগ্য দেবতা হিসেবে উল্লেখ করা হয়েছে।
-![alt text](bangla-rag-agent-docs/docs/images/interaction3.png)
+![alt text](bangla-rag-agent/docs/images/interaction3.png)
 Memory Updated:
 ```json
 {
