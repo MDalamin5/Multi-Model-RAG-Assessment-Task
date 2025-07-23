@@ -21,6 +21,8 @@ The agent's logic is structured as a graph, where each node represents a step in
 
 <!-- ![System Architecture Graph](bangla-rag-agent/docs/images/system_architecture.png) -->
 
+## **LangGraph-Orchestrator**
+
 ```mermaid
 graph TD
     A[Start] --> B(retrieve);
