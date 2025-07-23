@@ -63,16 +63,14 @@ graph TD
 
 ## 🚀 Setup and Installation Guide
 Follow these steps to get the project running on your local machine.
-1. Clone the Repository
+## 1. Clone the Repository
 ```bash
 
 git clone <your-repository-url>
 cd <repository-name>
 ```
-
+## 2. Set Up a Virtual Environment (Recommended)
 ```bash
-2. Set Up a Virtual Environment (Recommended)
-
 # For Windows
 python -m venv venv
 venv\Scripts\activate
@@ -82,7 +80,7 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. Install Dependencies
+## 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
@@ -97,7 +95,7 @@ copy .env.example .env
 cp .env.example .env
 ```
 
-Now, open the .env file and fill in your actual API keys from Groq, Pinecone, Hugging Face, and SERP API.
+Now, open the `.env` file and fill in your actual API keys from Groq, Pinecone, Hugging Face, and SERP API.
 
 ## 5. Run the Backend Server
 The backend is a FastAPI application. Run it from the root directory:
@@ -122,24 +120,25 @@ Request Body:
 ```json
 
 {
-  "query": "আপনার প্রশ্ন এখানে লিখুন",
+  "query": "Enter your Question Hare.....",
   "user_id": "unique_student_id",
   "thread_id": "unique_session_id"
 }
 ```
 
-- Success Response (200 OK):
+- **Success Response (200 OK):**
 ```json
 {
-  "response": "এজেন্টের তৈরি করা উত্তর এখানে থাকবে।"
+  "response": "এজেন্টের তৈরি করা উত্তর এখানে থাকবে। / Agent response is There"
 }
 ```
 
-- 2. Memory Endpoint
+## 2. Memory Endpoint
 This endpoint retrieves the stored long-term memory for a user, which is displayed in the Streamlit app's sidebar.
-Endpoint: GET /memory/{user_id}
-Path Parameter: user_id (string) - The unique ID of the user.
-Success Response (200 OK):
+
+- **Endpoint:** `GET /memory/{user_id}`
+- **Path Parameter**: `user_id` (string) - The unique ID of the user.
+- **Success Response (200 OK):**
 ```json
 {
     "user_id": "unique_student_id",
@@ -155,12 +154,13 @@ Success Response (200 OK):
 ## 💬 Sample Queries & Outputs
 Here are some sample interactions demonstrating the system's capabilities, including its long-term memory.
 
-## Interaction 1: First-time user introduces themself
-**User**: আমার নাম Al Amin, আমি দশম শ্রেণিতে পড়ি। 'অপরিচিতা' গল্পে বিয়ের সময় কল্যাণীর প্রকৃত বয়স কত ছিল?
-**Agent Response**: হ্যালো Al Amin! আশা করি তুমি ভালো আছো। 'অপরিচিতা' গল্পে বিয়ের সময় কল্যাণীর প্রকৃত বয়স ছিল পনেরো বছর।
+
+
+## Interactions in `Bangla`: First-time user introduces themself
+
 ![alt text](bangla-rag-agent/docs/images/interaction1.png)
 
-**Memory Stored:**
+**Memory Stored in First Interaction:**
 ```json
 {
   "user_name": "Al Amin",
@@ -168,12 +168,9 @@ Here are some sample interactions demonstrating the system's capabilities, inclu
   "topics_of_interest": ["অপরিচিতা"]
 }
 ```
-## Interaction 2: Same user in a new session asks a related question
-**User**: অনুপমের ভাষায় সুপুরুষ কাকে বলা হয়েছে?
-**Agent Response**: আল আমিন, তোমার প্রশ্নের উত্তর হলো: অনুপমের ভাষায় সুপুরুষ বলা হয়েছে শম্ভুনাথ সেনকে।
-![alt text](bangla-rag-agent/docs/images/interaction2.png)
 
-### Memory Updated:
+
+### Memory Updated 2nd Interaction Memory:
 ```json
 {
   "user_name": "Al Amin",
@@ -181,20 +178,9 @@ Here are some sample interactions demonstrating the system's capabilities, inclu
   "topics_of_interest": ["অপরিচিতা", "সুপুরুষ"]
 }
 ```
+## Interactions in `English`:
+![alt text](bangla-rag-agent/docs/images/interaction2.png)
 
-## Interaction 3: User asks another question
-User: কাকে অনুপমের ভাগ্য দেবতা বলে উল্লেখ করা হয়েছে?
-Agent Response: আল আমিন, তোমাকে নিশ্চয়ই মনে আছে যে, অনুপমের মামাকে তার ভাগ্য দেবতা হিসেবে উল্লেখ করা হয়েছে।
-![alt text](bangla-rag-agent/docs/images/interaction3.png)
-Memory Updated:
-```json
-{
-  "user_name": "Al Amin",
-  "grade_or_class": "10",
-  "topics_of_interest": ["অপরিচিতা", "সুপুরুষ", "ভাগ্য দেবতা"],
-  "last_topic_discussed": "ভাগ্য দেবতা"
-}
-```
 ## 📊 Evaluation Matrix
 A quantitative evaluation was performed to measure the system's accuracy and relevance.
 - **Context Relevance:** Measures if the retriever fetches the correct documents containing the necessary information.
