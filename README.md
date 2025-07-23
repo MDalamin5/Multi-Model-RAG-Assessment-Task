@@ -19,7 +19,7 @@ The core of the system is an agent built with LangChain and LangGraph. This agen
 
 The agent's logic is structured as a graph, where each node represents a step in the reasoning process. The agent dynamically traverses this graph based on the relevance of the retrieved information.
 
-![System Architecture Graph](docs/images/system_architecture.png)
+![System Architecture Graph](bangla-rag-agent/docs/images/system_architecture.png)
 
 ```mermaid
 graph TD
