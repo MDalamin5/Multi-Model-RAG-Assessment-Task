@@ -89,16 +89,36 @@ def generate_node(state: GraphState, config: dict, store: BaseStore):
         formatted_memory = "এই ছাত্রের জন্য কোনো স্মৃতি এখনো জমা হয়নি।"
     print(f"Loaded Memory: {formatted_memory}")
 
+    
     rag_with_memory_prompt = PromptTemplate(
-        template=(
-            "তুমি একজন সহায়ক ও ব্যক্তিগত বাংলা শিক্ষক। নিচের প্রশ্নটির উত্তর দেওয়ার জন্য প্রদত্ত প্রাসঙ্গিক তথ্য এবং ছাত্রের সম্পর্কে তোমার স্মৃতি ব্যবহার করো।\n\n"
-            "## ছাত্রের স্মৃতি:\n{memory}\n\n"
-            "## প্রাসঙ্গিক তথ্য:\n{context}\n\n"
-            "## প্রশ্ন:\n{question}\n\n"
-            "উত্তর (বাংলায় সংক্ষিপ্ত, ব্যক্তিগত এবং স্পষ্টভাবে দাও):"
-        ),
-        input_variables=["question", "context", "memory"],
-    )
+    template=(
+        "You are a helpful and personalized assistant. Your task is to answer the user's question by combining information from the 'Context' and your 'User Memory'.\n\n"
+        "First, identify the language of the user's 'Question'. "
+        "Then, provide your answer in the SAME language as the question (either English or Bengali), personalizing it with details from the 'User Memory' if relevant.\n\n"
+
+        "**Rules:**\n"
+        "1. If the 'Question' is in Bengali, your 'Answer' MUST be in Bengali.\n"
+        "2. If the 'Question' is in English, your 'Answer' MUST be in English.\n"
+        "3. If the answer is not found in the 'Context', you must politely state that you don't have enough information. In Bengali say: 'দুঃখিত, উত্তর দেওয়ার মতো পর্যাপ্ত তথ্য আমার কাছে নেই।' In English say: 'Sorry, I do not have enough information to answer that.'\n"
+        "4. Do not make up any information that is not in the context or memory.\n\n"
+
+        "--- START OF USER MEMORY ---\n"
+        "{memory}\n"
+        "--- END OF USER MEMORY ---\n\n"
+
+        "--- START OF CONTEXT ---\n"
+        "{context}\n"
+        "--- END OF CONTEXT ---\n\n"
+
+        "Question:\n{question}\n\n"
+
+        "Answer (personalized and in the same language as the question):"
+    ),
+    input_variables=["question", "context", "memory"],
+)
+
+    
+    
 
     rag_chain = rag_with_memory_prompt | llm | StrOutputParser()
     
