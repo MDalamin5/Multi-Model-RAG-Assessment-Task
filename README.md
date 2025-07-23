@@ -44,6 +44,7 @@ graph TD
     subgraph "Memory"
         F
     end
+```
 
 <hr>
 
@@ -61,7 +62,7 @@ graph TD
 ## 🚀 Setup and Installation Guide
 Follow these steps to get the project running on your local machine.
 1. Clone the Repository
-```
+```bash
 Generated bash
 git clone <your-repository-url>
 cd <repository-name>
